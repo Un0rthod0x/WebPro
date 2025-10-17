@@ -1,0 +1,21 @@
+{
+  "name": "webpro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prototype Website build",
+  "type": "module",
+ "scripts": {
+  "dev": "vite --root Website",
+  "build": "vite build --root Website",
+  "preview": "vite preview --strictPort --port 5173 --outDir Website/dist"
+},
+
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "eslint": "^9.37.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "vite": "^7.1.10"
+  }
+}
