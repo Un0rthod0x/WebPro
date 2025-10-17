@@ -3,12 +3,57 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>WebPro</title>
+    <title>Ayaan Faisal — Portfolio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>foo what up foo</h1>
-    <button id="btn">advice button</button>
-    <script type="module" src="main.js"></script>
+    <!-- Opposite-direction sweeps (topmost visual on load) -->
+    <div class="sweep sweep-a" aria-hidden="true"></div>
+    <div class="sweep sweep-b" aria-hidden="true"></div>
+
+    <!-- FADE-OUT VEIL -->
+    <div class="bg-veil" aria-hidden="true"></div>
+
+    <!-- Particle web (runs immediately, revealed by veil & its own fade-in) -->
+    <canvas id="web" aria-hidden="true"></canvas>
+
+    <main class="hero">
+      <div class="brand-lockup">
+        <span class="tag">portfolio</span>
+
+        <!-- Full-line effect -->
+        <h1 class="headline" aria-label="Hey, I’m Ayaan Faisal">
+          <span class="fx">
+            <span class="shine" aria-hidden="true">
+              Hey, I’m <span class="accent">Ayaan&nbsp;Faisal</span>
+            </span>
+            <span class="solid" aria-hidden="true">
+              Hey, I’m <span class="accent">Ayaan&nbsp;Faisal</span>
+            </span>
+          </span>
+        </h1>
+
+        <p class="sub">
+          Building sleek web experiences • JS / CSS / HTML • animations &amp; interactions
+        </p>
+
+        <div class="cta-row">
+          <a class="btn primary" href="#work">View work</a>
+          <a class="btn ghost" href="#contact">Contact</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <span>© <span id="year"></span> Ayaan Faisal</span>
+      <span class="sep">•</span>
+      <span class="hint">Scroll for more</span>
+    </footer>
+
+    <script src="main.js" type="module"></script>
   </body>
 </html>
