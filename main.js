@@ -154,65 +154,55 @@ window.addEventListener('mousemove', (e) => {
 startWeb();
 requestAnimationFrame(() => requestAnimationFrame(revealWeb));
 
-/* ===== Scroll spy for header (brand included) — robust version ===== */
+/* ===== Scroll spy for header ===== */
 (function setupScrollSpy() {
-    const links = Array.from(document.querySelectorAll('a.nav-link[href^="#"]'));
-    if (!links.length) return;
-  
-    const map = new Map();
-    links.forEach((a) => {
-      const id = a.getAttribute("href").slice(1);
-      if (id) map.set(id, a);
-    });
-  
-    // Observe these sections; order matters (top → bottom)
-    const order = ["top", "about", "work", "experience", "contact"];
-    const sections = order
-      .map(id => document.getElementById(id))
-      .filter(Boolean);
-  
-    const clearActive = () => links.forEach(a => a.classList.remove('active'));
-    const setActive = (id) => {
-      const link = map.get(id);
-      if (!link) return;
-      clearActive();
-      link.classList.add('active');
-    };
-  
-    function recompute() {
-      // Pick a vertical probe ~30% down the viewport to decide “current”
-      const probe = window.scrollY + window.innerHeight * 0.30;
-  
-      let currentId = order[0]; // fallback to top
-      for (const sec of sections) {
-        const rect = sec.getBoundingClientRect();
-        const top = rect.top + window.scrollY;
-        const bottom = top + sec.offsetHeight;
-        if (probe >= top && probe < bottom) {
-          currentId = sec.id;
-          break;
-        }
-      }
-      setActive(currentId);
-    }
-  
-    // Recompute on load, scroll, and resize
-    window.addEventListener('scroll', recompute, { passive: true });
-    window.addEventListener('resize', recompute);
-    window.addEventListener('load', recompute);
-    // Also when clicking a nav link
-    links.forEach(a => a.addEventListener('click', () => {
-      setTimeout(recompute, 50);
-    }));
-  
-    recompute();
-  })();
-  
+  const links = Array.from(document.querySelectorAll('a.nav-link[href^="#"]'));
+  if (!links.length) return;
 
-/* ===== About bubble: fade & re-shine on view ===== */
+  const map = new Map();
+  links.forEach((a) => {
+    const id = a.getAttribute("href").slice(1);
+    if (id) map.set(id, a);
+  });
+
+  const order = ["top", "about", "work", "experience", "contact"];
+  const sections = order.map(id => document.getElementById(id)).filter(Boolean);
+
+  const clearActive = () => links.forEach(a => a.classList.remove('active'));
+  const setActive = (id) => {
+    const link = map.get(id);
+    if (!link) return;
+    clearActive();
+    link.classList.add('active');
+  };
+
+  function recompute() {
+    const probe = window.scrollY + window.innerHeight * 0.30;
+    let currentId = order[0];
+    for (const sec of sections) {
+      const rect = sec.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      const bottom = top + sec.offsetHeight;
+      if (probe >= top && probe < bottom) {
+        currentId = sec.id;
+        break;
+      }
+    }
+    setActive(currentId);
+  }
+
+  window.addEventListener('scroll', recompute, { passive: true });
+  window.addEventListener('resize', recompute);
+  window.addEventListener('load', recompute);
+  links.forEach(a => a.addEventListener('click', () => { setTimeout(recompute, 50); }));
+  recompute();
+})();
+
+/* ===== About: bubble fade/shine + chip stagger ===== */
 (function setupAbout() {
   const bubble = document.getElementById('about-bubble');
-  if (!bubble) return;
+  const grid = document.getElementById('about-grid');
+  if (!bubble || !grid) return;
 
   const runShine = () => {
     bubble.classList.remove('shine-run');
@@ -222,17 +212,20 @@ requestAnimationFrame(() => requestAnimationFrame(revealWeb));
 
   let cooldown = 0;
   const COOL_MS = 900;
+
   const io = new IntersectionObserver((entries) => {
     const now = performance.now();
     entries.forEach(ent => {
       if (ent.isIntersecting && ent.intersectionRatio > 0.55){
         bubble.classList.add('in');
+        grid.classList.add('in'); // triggers chip stagger
         if (now - cooldown > COOL_MS){
           runShine();
           cooldown = now;
         }
       } else if (!ent.isIntersecting){
         bubble.classList.remove('in');
+        grid.classList.remove('in'); // allow re-run
       }
     });
   }, { threshold: [0, 0.55, 0.9] });
@@ -240,24 +233,5 @@ requestAnimationFrame(() => requestAnimationFrame(revealWeb));
   io.observe(bubble);
 })();
 
-/* ===== Flip-card interactions (click + keyboard) ===== */
-(function setupFlips() {
-  const cards = Array.from(document.querySelectorAll('.flip-card'));
-  cards.forEach(btn => {
-    const inner = btn.querySelector('.flip-inner');
-    if (!inner) return;
-
-    const toggle = () => {
-      const isFlipped = btn.classList.toggle('is-flipped');
-      btn.setAttribute('aria-expanded', String(isFlipped));
-    };
-
-    btn.addEventListener('click', toggle);
-    btn.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggle();
-      }
-    });
-  });
-})();
+/* ===== Flip-card interactions — hover handles flipping now ===== */
+(function setupFlips(){ /* no-op */ })();

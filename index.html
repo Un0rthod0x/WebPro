@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
 
-    <!-- Devicon (for Tool Kit icons) -->
+    <!-- Devicon (for icons) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
 
     <link rel="stylesheet" href="style.css" />
@@ -96,28 +96,39 @@
       <div class="container about-wrap">
         <h2 class="section-bubble about-header">About Me</h2>
 
-        <div class="about-bubble" id="about-bubble">
-          <div class="bubble-shine" aria-hidden="true"></div>
-          <p class="about-text">
-            For as long as I can remember, I've loved building things and seeing them work; software engineering lets me pursue that passion with little resources and easy-to-implement iterations. As I've grown up, I've taken a keen interest in financial markets and the movement of money in tandem with predictive models and machine learning as they've steadily taken center stage in the tech world: that's why I pursue Computer Science, Data Science, and Economics, collectively garnering experience in full-stack development, data analysis, and finance applications. I'm quick to learn, a strong collaborator, and motivated to apply problem-solving with modern technology to create valuable products.
-          </p>
-          <p class="about-text">
-            When I build, I like to focus on real problems I've seen or know people deal with. I build with the intent to solve problems and streamline complex workflows, with a particular emphasis on the people involved in my work who'll end up using my product, stemming from my own.
-          </p>
-          <p class="about-cta">Check out some of the work I've done and the story behind these products!</p>
+        <div class="about-grid" id="about-grid">
+          <!-- Left chip column -->
+          <ul class="tools-list left-tools" aria-label="Tech tools (left)">
+            </ul>
+
+          <!-- Center about bubble -->
+          <div class="about-bubble" id="about-bubble">
+            <div class="bubble-shine" aria-hidden="true"></div>
+            <p class="about-text">
+              For as long as I can remember, I've loved building things and seeing them work; software engineering lets me pursue that passion with little resources and easy-to-implement iterations. As I've grown up, I've taken a keen interest in financial markets and the movement of money in tandem with predictive models and machine learning as they've steadily taken center stage in the tech world: that's why I pursue Computer Science, Data Science, and Economics, collectively garnering experience in full-stack development, data analysis, and finance applications. I'm quick to learn, a strong collaborator, and motivated to apply problem-solving with modern technology to create valuable products.
+            </p>
+            <p class="about-text">
+              When I build, I like to focus on real problems I've seen or know people deal with. I build with the intent to solve problems and streamline complex workflows, with a particular emphasis on the people involved in my work who'll end up using my product, stemming from my own.
+            </p>
+            <p class="about-cta">Check out some of the work I've done and the story behind these products!</p>
+          </div>
+
+          <!-- Right chip column -->
+          <ul class="tools-list right-tools" aria-label="Tech tools (right)">
+
+          </ul>
         </div>
       </div>
     </section>
 
     <!-- ===== PROJECTS ===== -->
     <section class="projects" id="work" aria-label="Projects">
-      <div class="projects-inner two-col thin-right">
-        <!-- LEFT -->
+      <div class="projects-inner centered">
         <main class="projects-col">
-          <h2 class="section-bubble section-left">My Projects</h2>
+          <h2 class="section-bubble section-center">My Projects</h2>
 
           <article class="project">
-            <button class="flip-card" aria-label="Flip project card 1" aria-expanded="false">
+            <div class="flip-card" aria-label="Project card 1">
               <div class="flip-inner">
                 <div class="flip-face flip-front">
                   <div class="project-logo">AF</div>
@@ -132,7 +143,7 @@
                   <p class="proj-notes">Predictive modeling + sleek UI; fast iteration and clean deployment.</p>
                 </div>
               </div>
-            </button>
+            </div>
 
             <div class="video-card">
               <div class="video-aspect">
@@ -147,7 +158,7 @@
           </article>
 
           <article class="project">
-            <button class="flip-card" aria-label="Flip project card 2" aria-expanded="false">
+            <div class="flip-card" aria-label="Project card 2">
               <div class="flip-inner">
                 <div class="flip-face flip-front">
                   <div class="project-logo">NN</div>
@@ -162,7 +173,7 @@
                   <p class="proj-notes">Semantic search & summarization with a responsive experience.</p>
                 </div>
               </div>
-            </button>
+            </div>
 
             <div class="video-card">
               <div class="video-aspect">
@@ -177,7 +188,7 @@
           </article>
 
           <article class="project">
-            <button class="flip-card" aria-label="Flip project card 3" aria-expanded="false">
+            <div class="flip-card" aria-label="Project card 3">
               <div class="flip-inner">
                 <div class="flip-face flip-front">
                   <div class="project-logo">FM</div>
@@ -192,7 +203,7 @@
                   <p class="proj-notes">Signals forecasting + investor-friendly dashboards.</p>
                 </div>
               </div>
-            </button>
+            </div>
 
             <div class="video-card">
               <div class="video-aspect">
@@ -206,61 +217,13 @@
             </div>
           </article>
         </main>
-
-        <!-- RIGHT -->
-        <aside class="tech-col">
-          <h2 class="section-bubble section-right">Tool Kit</h2>
-
-          <!-- Start lower so first chip lines up with first project card -->
-          <div class="stack-pack tight">
-            <!-- Languages -->
-            <div class="stack-group">
-              <h3 class="stack-title">Languages</h3>
-              <ul class="stack-list center">
-                <li class="chip"><i class="devicon-java-plain"></i><span>Java</span></li>
-                <li class="chip"><i class="devicon-python-plain"></i><span>Python</span></li>
-                <li class="chip"><i class="devicon-c-plain"></i><span>C</span></li>
-                <li class="chip"><i class="devicon-r-plain"></i><span>R</span></li>
-                <li class="chip"><i class="devicon-javascript-plain"></i><span>JavaScript</span></li>
-                <li class="chip"><i class="devicon-mysql-plain"></i><span>SQL</span></li>
-                <li class="chip"><i class="devicon-html5-plain"></i><span>HTML</span></li>
-                <li class="chip"><i class="devicon-css3-plain"></i><span>CSS</span></li>
-              </ul>
-            </div>
-
-            <!-- Frameworks -->
-            <div class="stack-group">
-              <h3 class="stack-title">Frameworks</h3>
-              <ul class="stack-list center">
-                <li class="chip"><i class="devicon-pytorch-original"></i><span>PyTorch</span></li>
-                <li class="chip"><i class="devicon-pandas-original"></i><span>Pandas</span></li>
-                <li class="chip"><i class="devicon-tensorflow-original"></i><span>TensorFlow</span></li>
-                <li class="chip"><i class="devicon-react-original"></i><span>React</span></li>
-                <li class="chip"><i class="devicon-nodejs-plain"></i><span>Node.js</span></li>
-                <li class="chip"><span class="mono">FastAPI</span></li>
-                <li class="chip"><span class="mono">asyncio</span></li>
-                <li class="chip"><span class="mono">ONNX</span></li>
-                <li class="chip"><span class="mono">WebSockets</span></li>
-              </ul>
-            </div>
-
-            <!-- Tools -->
-            <div class="stack-group">
-              <h3 class="stack-title">Tools</h3>
-              <ul class="stack-list center">
-                <li class="chip"><i class="devicon-git-plain"></i><span>Git</span></li>
-                <li class="chip"><i class="devicon-vitejs-plain"></i><span>Vite</span></li>
-              </ul>
-            </div>
-          </div>
-        </aside>
       </div>
     </section>
 
     <!-- ===== CONTACT ===== -->
     <section class="contact" id="contact" aria-label="Contact">
       <div class="container contact-wrap">
-        <h2 class="section-bubble section-left">Contact Me</h2>
+        <h2 class="section-bubble section-center">Contact Me</h2>
 
         <form class="glass-form" action="#" method="POST" novalidate>
           <div class="field">
@@ -285,7 +248,7 @@
       </div>
     </section>
 
-    <!-- Placeholders -->
+    <!-- Placeholder -->
     <section id="experience" class="spacer"></section>
 
     <footer class="foot">

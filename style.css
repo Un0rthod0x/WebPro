@@ -135,7 +135,7 @@
   .hero{ min-height:100svh; display:grid; place-items:center; padding:6.5rem 1.5rem 3rem; position:relative; overflow:clip; z-index:4; }
   .hero .grid{
     width:min(1200px, 92vw); margin:0 auto;
-    display:grid; grid-template-columns: 1.2fr 0.8fr; /* wider left, narrower right */
+    display:grid; grid-template-columns: 1.2fr 0.8fr;
     align-items:center; gap:clamp(28px, 5.5vw, 72px);
   }
   .left{ display:grid; justify-items:center; align-items:center; }
@@ -239,6 +239,21 @@
     color:#fff; font-weight:800; letter-spacing:.03em;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.10), 0 8px 22px rgba(0,0,0,.35), 0 0 14px var(--red-glow-1), 0 0 26px var(--red-glow-2);
   }
+  
+  /* Three-column grid: left chips, about bubble, right chips */
+  .about-grid{
+    width:100%;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr; /* mobile fallback */
+    align-items: stretch;               /* sides stretch to match center height */
+    gap: clamp(10px, 2vw, 18px);
+    margin-top: 10px;
+  }
+  @media (min-width: 901px){
+    .about-grid{ grid-template-columns: minmax(110px, 18vw) 1fr minmax(110px, 18vw); }
+  }
+  
+  /* About bubble */
   .about-bubble{
     position:relative; width:min(900px, 84%);
     padding: clamp(20px, 3.2vw, 34px) clamp(22px, 3.4vw, 40px);
@@ -258,28 +273,68 @@
   .about-text{ margin:.5rem 0; color:var(--silver); font-size:clamp(1rem,1.15vw,1.1rem); }
   .about-cta{ margin-top:.9rem; color:#fff; font-weight:600; }
   
+  /* Side chip lists (no container bubble, just chips) */
+  .tools-list{
+    display:none;              /* hidden on mobile */
+  }
+  @media (min-width: 901px){
+    .tools-list{
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between; /* makes last chip end where the about bubble ends */
+      gap:10px;
+      height:100%;                  /* stretch to match center height */
+      align-self:stretch;
+    }
+  }
+  /* Individual chips — slimmer */
+  .tools-list .chip{
+    display:flex; align-items:center; gap:8px;
+    padding:7px 10px; border-radius:12px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    color:var(--silver);
+    width:100%;
+    justify-content:center;
+    transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+    opacity:0; transform: translateY(6px) scale(.98);
+    font-size:.95rem;
+  }
+  .tools-list .chip:hover{
+    transform:translateY(-1px);
+    border-color:rgba(255,255,255,.18);
+    box-shadow:0 0 12px var(--red-glow-1), 0 0 24px var(--red-glow-2);
+  }
+  .tools-list i{ font-size:20px; filter:saturate(0) brightness(1.2); }
+  
+  /* Rapid stagger trigger */
+  .about-grid.in .tools-list .chip{
+    animation: chipIn 320ms cubic-bezier(.2,.8,.2,1) forwards;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+  @keyframes chipIn{
+    from{ opacity:0; transform: translateY(6px) scale(.98); }
+    to  { opacity:1; transform: none; }
+  }
+  
   /* ---------- PROJECTS ---------- */
-.projects{
+  .projects{
     min-height:100svh;
     padding:6rem 1.5rem 6rem;
     position:relative;
     z-index:4;
   }
   
-  /* wider container + wider LEFT column, columns closer together */
-  .projects-inner.two-col.thin-right{
-    width:min(1340px, 96vw);
+  /* Centered single-column layout aligned with About container */
+  .projects-inner.centered{
+    width:min(1300px, 94vw);
     margin:0 auto;
-    display:grid;
-    grid-template-columns: minmax(900px, 1fr) 300px; /* ↑ wider projects col */
-    align-items:start;
-    gap: clamp(16px, 2vw, 24px);                      /* ↓ tighter gap */
-  }
-  @media (max-width: 1100px){
-    .projects-inner.two-col.thin-right{ grid-template-columns: 1fr; }
+    display:flex;
+    flex-direction:column;
+    align-items:center;
   }
   
-  /* Section bubble headers */
+  /* Section bubble */
   .section-bubble{
     display:inline-flex; align-items:center; justify-content:center;
     padding:.55rem 1rem; margin:0 0 .8rem 0;
@@ -293,37 +348,34 @@
       0 0 14px var(--red-glow-1),
       0 0 26px var(--red-glow-2);
   }
-  .section-left,
-  .section-right{
-    align-self:center; width:75%; margin-left:auto; margin-right:auto; text-align:center;
-  }
+  .section-center{ margin-inline:auto; }
   
-  /* Left column: projects now stretch full column width */
   .projects-col{
     display:flex; flex-direction:column;
     gap: clamp(24px, 3.6vw, 36px);
-    align-items:stretch;                         /* was center */
+    align-items:center;
+    width:88%;               /* slightly wider than About’s 84% */
+    margin-inline:auto;      /* comfy side margins, no max-width */
   }
   .projects-col .project:first-child{ margin-top: var(--column-start-gap); }
   
   .project{
-    width:100%; max-width:none;                  /* was 800px */
+    width:100%;
     display:flex; flex-direction:column; gap:12px;
   }
   
   /* Flip card */
   .flip-card{
-    background:transparent; border:none; padding:0; cursor:pointer;
+    background:transparent; border:none; padding:0; cursor:default;
     perspective:1200px; border-radius:var(--card-radius); outline:none;
   }
   .flip-inner{
-    position:relative; width:100%; height:320px; /* a touch taller for the new width */
+    position:relative; width:100%; height:360px;
     transform-style:preserve-3d;
     transition:transform 600ms cubic-bezier(.2,.8,.2,1);
     border-radius:var(--card-radius);
   }
-  .flip-card:focus-visible .flip-inner{ box-shadow:0 0 0 3px rgba(255,255,255,.22); }
-  .flip-card.is-flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-card:hover .flip-inner{ transform:rotateY(180deg); }
   
   .flip-face{
     position:absolute; inset:0; backface-visibility:hidden; border-radius:var(--card-radius);
@@ -386,48 +438,6 @@
   .video-aspect iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
   .video-caption{ padding:.65rem .9rem; color:var(--silver); font-weight:600; display:flex; align-items:center; justify-content:space-between; }
   
-  /* ---------- Right: Tool Kit (even spacing + lower start) ---------- */
-  .tech-col{ display:flex; flex-direction:column; align-items:center; gap:14px; align-self:stretch; height:100%; }
-  .section-right{ align-self:center; width:75%; margin-left:auto; margin-right:auto; text-align:center; }
-  
-  /* lower the start so first chip aligns with first project card */
-  .stack-pack.tight{
-    display:flex; flex-direction:column;
-    justify-content:space-between;
-    height:100%; width:100%;
-    margin-top: var(--column-start-gap);
-  }
-  /* dissolve wrappers so each .chip is a direct flex child */
-  .stack-pack.tight > *{ display:contents; }
-  .stack-pack.tight .stack-list{ display:contents; }
-  .stack-title{ display:none; }
-  
-  .stack-list{ list-style:none; margin:0; padding:0; }
-  
-  /* ↓ narrower chips so they don't look oversized */
-  .chip{
-    display:flex; align-items:center; gap:8px;
-    padding:9px 12px; border-radius:14px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    color:var(--silver);
-    width:86%;                         /* was 100% */
-    margin-inline:auto;                /* center the shorter chip */
-    justify-content:center;
-    transition:box-shadow .18s ease, transform .18s ease, border-color .18s ease;
-  }
-  .chip:hover{
-    transform:translateY(-1px);
-    border-color:rgba(255,255,255,.18);
-    box-shadow:0 0 12px var(--red-glow-1), 0 0 24px var(--red-glow-2);
-  }
-  @media (max-width:1100px){
-    .chip{ width:92%; }
-  }
-  
-  .stack-list i{ font-size:22px; filter:saturate(0) brightness(1.2); }
-  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; color:var(--ring); }
-  
   /* ---------- CONTACT ---------- */
   .contact{
     min-height:80svh;
@@ -485,10 +495,6 @@
     border-color:rgba(255,255,255,.28);
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.12), 0 10px 24px rgba(0,0,0,.35), 0 0 22px var(--red-glow-1), 0 0 36px var(--red-glow-2);
   }
-  @media (max-width:700px){
-    .glass-form{ grid-template-columns:1fr; }
-  }
-  
   
   /* ---------- Misc ---------- */
   .spacer{ min-height:60svh; }
@@ -507,5 +513,6 @@
     #web{ opacity:.20 } .bg-veil{ opacity:0 !important; }
     .about-bubble{ opacity:1 !important; transform:none !important; }
     .flip-inner{ transition:none !important; }
+    .tools-list .chip{ opacity:1 !important; transform:none !important; animation:none !important; }
   }
   
