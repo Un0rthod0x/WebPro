@@ -983,6 +983,18 @@ body::after {
   transition: box-shadow .18s ease, border-color .18s ease;
 }
 
+@media (max-width: 600px) {
+  .glass-form {
+    grid-template-columns: 1fr;
+    width: 94%;
+    padding: 1.5rem;
+  }
+
+  .contact {
+    padding-inline: 1rem;
+  }
+}
+
 .glass-form:hover {
   border-color: rgba(255, 255, 255, .22);
   box-shadow: 0 20px 60px rgba(0, 0, 0, .35), inset 0 0 0 1px var(--glass-inset),
