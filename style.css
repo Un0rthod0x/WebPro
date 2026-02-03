@@ -555,7 +555,7 @@ body::after {
 .about-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr;
   /* mobile fallback */
   align-items: stretch;
   /* sides stretch to match center height */
