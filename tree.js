@@ -19,11 +19,11 @@ const cursor = { x: 0, y: 0, vx: 0, vy: 0, lastX: 0, lastY: 0, speed: 0 };
 let lastCursorTime = 0;
 
 // Config
-const GROWTH_DURATION = 3200; // ms for full tree growth
+const GROWTH_DURATION = 2800; // ms for full tree growth
 const GROWTH_START_DELAY = 300; // ms before growth starts
-const MAX_DEPTH = 12;
-const BRANCH_SHRINK = 0.68;
-const BRANCH_ANGLE_SPREAD = 0.35;
+const MAX_DEPTH = 8; // Reduced for performance
+const BRANCH_SHRINK = 0.72;
+const BRANCH_ANGLE_SPREAD = 0.5; // More spread out
 const CURSOR_RUFFLE_RADIUS = 100;
 const CURSOR_SPEED_THRESHOLD = 6;
 
@@ -62,34 +62,32 @@ function generateTree() {
   sparkles = [];
   resetSeed();
   
-  // Multiple main branches emanating from top-left corner area
-  // More branches for denser coverage like the reference image
-  const numMainBranches = 10;
+  // Fewer main branches, but longer and more spread out
+  const numMainBranches = 5;
   
   for (let i = 0; i < numMainBranches; i++) {
-    // Spread starting points along the top and left edges
+    // Spread starting points along the top-left corner
     let startX, startY;
     
-    if (i < 6) {
-      // Top edge, spreading across
-      startX = -30 + (i * 60) + seededRandom() * 40;
-      startY = -30 + seededRandom() * 60;
+    if (i < 3) {
+      // Top edge branches
+      startX = -20 + (i * 120);
+      startY = -20 + seededRandom() * 40;
     } else {
-      // Left edge, going down
-      startX = -30 + seededRandom() * 50;
-      startY = 40 + ((i - 6) * 80) + seededRandom() * 60;
+      // Left edge branches
+      startX = -20 + seededRandom() * 30;
+      startY = 80 + ((i - 3) * 150);
     }
     
-    // Main branch length varies
-    const initialLength = Math.min(treeW, treeH) * (0.1 + seededRandom() * 0.1);
+    // Longer initial branches to spread across screen
+    const initialLength = Math.min(treeW, treeH) * (0.18 + seededRandom() * 0.1);
     
-    // Angle pointing down and to the right, with some variation
-    // Branches from top go more diagonal, branches from side go more horizontal
+    // Angle pointing down and to the right
     let initialAngle;
-    if (i < 6) {
-      initialAngle = Math.PI * (0.35 + seededRandom() * 0.35);
+    if (i < 3) {
+      initialAngle = Math.PI * (0.3 + i * 0.15 + seededRandom() * 0.2);
     } else {
-      initialAngle = Math.PI * (0.15 + seededRandom() * 0.4);
+      initialAngle = Math.PI * (0.1 + seededRandom() * 0.35);
     }
     
     generateBranch(startX, startY, initialLength, initialAngle, 0, i);
@@ -97,7 +95,7 @@ function generateTree() {
 }
 
 function generateBranch(x, y, length, angle, depth, growOrder) {
-  if (depth > MAX_DEPTH || length < 3) return;
+  if (depth > MAX_DEPTH || length < 8) return; // Higher minimum length
   
   const endX = x + Math.cos(angle) * length;
   const endY = y + Math.sin(angle) * length;
@@ -114,7 +112,7 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
     angle,
     growStart,
     growEnd,
-    thickness: Math.max(0.5, (MAX_DEPTH - depth) * 0.5),
+    thickness: Math.max(0.8, (MAX_DEPTH - depth) * 0.7),
     // Store original positions for rustle effect
     originalX2: endX,
     originalY2: endY,
@@ -146,8 +144,8 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
   }
   
   // Create child branches - weeping willow style, cascading downward
-  // More children at early depths for dense branching
-  const numChildren = depth < 2 ? 5 : (depth < 5 ? 3 : (seededRandom() > 0.25 ? 2 : 1));
+  // Fewer children for better performance
+  const numChildren = depth < 2 ? 3 : (depth < 4 ? 2 : (seededRandom() > 0.5 ? 2 : 1));
   
   for (let i = 0; i < numChildren; i++) {
     // Angle tends to go more downward as depth increases (weeping effect)
@@ -168,6 +166,7 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
 
 // Spawn petals when cursor ruffles leaves
 function spawnPetals(x, y, count) {
+  if (petals.length > 40) return; // Limit for performance
   for (let i = 0; i < count; i++) {
     petals.push({
       x: x + (Math.random() - 0.5) * 30,
@@ -210,11 +209,12 @@ function updateCursor(e) {
 let sparkles = [];
 
 function addGrowthSparkle(x, y) {
+  if (sparkles.length > 30) return; // Limit for performance
   sparkles.push({
     x, y,
     size: 2 + Math.random() * 3,
     life: 1,
-    decay: 0.03 + Math.random() * 0.02
+    decay: 0.04 + Math.random() * 0.03 // Faster decay
   });
 }
 
@@ -280,8 +280,8 @@ function drawTree(progress) {
     treeCtx.lineTo(currentX2, currentY2);
     treeCtx.stroke();
     
-    // Add sparkles at growing tips
-    if (branchProgress > 0.1 && branchProgress < 0.95 && Math.random() < 0.08) {
+    // Add sparkles at growing tips (reduced frequency for performance)
+    if (branchProgress > 0.1 && branchProgress < 0.95 && Math.random() < 0.03) {
       addGrowthSparkle(currentX2, currentY2);
     }
     
