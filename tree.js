@@ -19,11 +19,11 @@ const cursor = { x: 0, y: 0, vx: 0, vy: 0, lastX: 0, lastY: 0, speed: 0 };
 let lastCursorTime = 0;
 
 // Config
-const GROWTH_DURATION = 2800; // ms for full tree growth
-const GROWTH_START_DELAY = 300; // ms before growth starts
-const MAX_DEPTH = 8; // Reduced for performance
-const BRANCH_SHRINK = 0.72;
-const BRANCH_ANGLE_SPREAD = 0.5; // More spread out
+const GROWTH_DURATION = 3000; // ms for full tree growth
+const GROWTH_START_DELAY = 200; // ms before growth starts
+const MAX_DEPTH = 9;
+const BRANCH_SHRINK = 0.75;
+const BRANCH_ANGLE_SPREAD = 0.3; // Tighter spread for cohesive look
 const CURSOR_RUFFLE_RADIUS = 100;
 const CURSOR_SPEED_THRESHOLD = 6;
 
@@ -55,47 +55,41 @@ function resetSeed() {
   seed = 12345;
 }
 
-// Generate tree structure - weeping willow style from top-left
+// Generate tree structure - all branches from single origin in top-left
 function generateTree() {
   branches = [];
   leaves = [];
   sparkles = [];
   resetSeed();
   
-  // Fewer main branches, but longer and more spread out
-  const numMainBranches = 5;
+  // Single origin point - slightly off screen top-left
+  const originX = -40;
+  const originY = -40;
+  
+  // Create main trunk branches that all emanate from the same point
+  // Like the reference image - a cluster of branches cascading down and right
+  const numMainBranches = 7;
   
   for (let i = 0; i < numMainBranches; i++) {
-    // Spread starting points along the top-left corner
-    let startX, startY;
+    // All start from the same origin with slight variation
+    const startX = originX + seededRandom() * 20;
+    const startY = originY + seededRandom() * 20;
     
-    if (i < 3) {
-      // Top edge branches
-      startX = -20 + (i * 120);
-      startY = -20 + seededRandom() * 40;
-    } else {
-      // Left edge branches
-      startX = -20 + seededRandom() * 30;
-      startY = 80 + ((i - 3) * 150);
-    }
+    // Initial length - longer branches to reach across screen
+    const initialLength = Math.min(treeW, treeH) * (0.15 + seededRandom() * 0.12);
     
-    // Longer initial branches to spread across screen
-    const initialLength = Math.min(treeW, treeH) * (0.18 + seededRandom() * 0.1);
-    
-    // Angle pointing down and to the right
-    let initialAngle;
-    if (i < 3) {
-      initialAngle = Math.PI * (0.3 + i * 0.15 + seededRandom() * 0.2);
-    } else {
-      initialAngle = Math.PI * (0.1 + seededRandom() * 0.35);
-    }
+    // Angles spread in a fan pattern, all going down-right (like reference)
+    // Range from about 20 degrees to 70 degrees (0.11*PI to 0.39*PI)
+    const angleRange = 0.35; // Total spread
+    const baseAngle = 0.15; // Starting angle (roughly 27 degrees)
+    const initialAngle = Math.PI * (baseAngle + (i / numMainBranches) * angleRange + seededRandom() * 0.08);
     
     generateBranch(startX, startY, initialLength, initialAngle, 0, i);
   }
 }
 
 function generateBranch(x, y, length, angle, depth, growOrder) {
-  if (depth > MAX_DEPTH || length < 8) return; // Higher minimum length
+  if (depth > MAX_DEPTH || length < 6) return;
   
   const endX = x + Math.cos(angle) * length;
   const endY = y + Math.sin(angle) * length;
@@ -112,7 +106,7 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
     angle,
     growStart,
     growEnd,
-    thickness: Math.max(0.8, (MAX_DEPTH - depth) * 0.7),
+    thickness: Math.max(0.6, (MAX_DEPTH - depth) * 0.55),
     // Store original positions for rustle effect
     originalX2: endX,
     originalY2: endY,
@@ -122,8 +116,8 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
   });
   
   // Add small buds/nodes at branch tips (subtle, like the reference)
-  if (depth >= MAX_DEPTH - 2 && seededRandom() > 0.4) {
-    const leafCount = Math.floor(seededRandom() * 2) + 1;
+  if (depth >= MAX_DEPTH - 2 && seededRandom() > 0.5) {
+    const leafCount = 1;
     for (let i = 0; i < leafCount; i++) {
       leaves.push({
         x: endX + (seededRandom() - 0.5) * 15,
@@ -143,22 +137,24 @@ function generateBranch(x, y, length, angle, depth, growOrder) {
     }
   }
   
-  // Create child branches - weeping willow style, cascading downward
-  // Fewer children for better performance
-  const numChildren = depth < 2 ? 3 : (depth < 4 ? 2 : (seededRandom() > 0.5 ? 2 : 1));
+  // Create child branches - weeping style cascading down-right
+  const numChildren = depth < 2 ? 3 : (depth < 5 ? 2 : (seededRandom() > 0.6 ? 2 : 1));
   
   for (let i = 0; i < numChildren; i++) {
-    // Angle tends to go more downward as depth increases (weeping effect)
-    const downwardBias = depth * 0.04; // Gradually pull branches down
-    const angleOffset = (seededRandom() - 0.4) * BRANCH_ANGLE_SPREAD * 2; // Slight bias toward spreading right/down
+    // Slight downward pull as branches get deeper (weeping effect)
+    const downwardBias = depth * 0.03;
     
-    // Keep angle roughly between 0 and PI (pointing rightward and downward)
+    // Spread children around parent angle, biased slightly downward
+    const spreadFactor = (i - (numChildren - 1) / 2) / Math.max(1, numChildren - 1);
+    const angleOffset = spreadFactor * BRANCH_ANGLE_SPREAD + (seededRandom() - 0.5) * 0.15;
+    
     let newAngle = angle + angleOffset + downwardBias;
     
-    // Clamp to prevent branches going upward or too far left
-    newAngle = Math.max(0.1, Math.min(Math.PI * 0.85, newAngle));
+    // Keep branches flowing down-right (between 0 and ~80 degrees from horizontal)
+    // This prevents branches from going backward or straight down
+    newAngle = Math.max(0.05, Math.min(Math.PI * 0.5, newAngle));
     
-    const newLength = length * BRANCH_SHRINK * (0.8 + seededRandom() * 0.35);
+    const newLength = length * BRANCH_SHRINK * (0.85 + seededRandom() * 0.25);
     
     generateBranch(endX, endY, newLength, newAngle, depth + 1, growOrder + 1);
   }
