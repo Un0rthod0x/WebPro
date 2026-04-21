@@ -1,36 +1,34 @@
 "use strict";
 
-/* ===== Crystal Tree Animation ===== */
+/* ===== Crystal Tree Background with Image Reveal ===== */
 const treeCanvas = document.getElementById("tree-canvas");
 const treeCtx = treeCanvas.getContext("2d");
 
 let treeW = 0, treeH = 0;
 let treeDpr = Math.max(1, window.devicePixelRatio || 1);
 
-// Tree structure
-let branches = [];
-let leaves = [];
-let petals = [];
-let growthProgress = 0;
-let isGrowing = true;
+// Image
+const treeImage = new Image();
+treeImage.crossOrigin = "anonymous";
+treeImage.src = "/images/crystal-tree.png";
+let imageLoaded = false;
 
-// Cursor tracking for interaction
-const cursor = { x: 0, y: 0, vx: 0, vy: 0, lastX: 0, lastY: 0, speed: 0 };
+// Animation state
+let revealProgress = 0;
+let isRevealing = true;
+const REVEAL_DURATION = 2800; // ms for full reveal
+const REVEAL_START_DELAY = 200;
+
+// Cursor tracking for petal interaction
+const cursor = { x: 0, y: 0, vx: 0, vy: 0, speed: 0 };
 let lastCursorTime = 0;
 
-// Config
-const GROWTH_DURATION = 3000; // ms for full tree growth
-const GROWTH_START_DELAY = 200; // ms before growth starts
-const MAX_DEPTH = 9;
-const BRANCH_SHRINK = 0.75;
-const BRANCH_ANGLE_SPREAD = 0.3; // Tighter spread for cohesive look
-const CURSOR_RUFFLE_RADIUS = 100;
-const CURSOR_SPEED_THRESHOLD = 6;
+// Petals for interaction
+let petals = [];
+const CURSOR_SPEED_THRESHOLD = 8;
 
-// Colors - darker crimson red like the reference image
-const BRANCH_COLOR = "rgb(140, 15, 25)";
-const LEAF_COLOR = "rgba(160, 25, 35, 0.8)";
-const PETAL_COLOR = "rgba(180, 30, 40, 0.85)";
+// Crystal sparkles during reveal
+let sparkles = [];
 
 function sizeTreeCanvas() {
   const vw = window.innerWidth;
@@ -44,136 +42,31 @@ function sizeTreeCanvas() {
   treeH = vh;
 }
 
-// Seeded random for consistent tree shape
-let seed = 12345;
-function seededRandom() {
-  seed = (seed * 9301 + 49297) % 233280;
-  return seed / 233280;
-}
-
-function resetSeed() {
-  seed = 12345;
-}
-
-// Generate tree structure - all branches from single origin in top-left
-function generateTree() {
-  branches = [];
-  leaves = [];
-  sparkles = [];
-  resetSeed();
-  
-  // Single origin point - slightly off screen top-left
-  const originX = -40;
-  const originY = -40;
-  
-  // Create main trunk branches that all emanate from the same point
-  // Like the reference image - a cluster of branches cascading down and right
-  const numMainBranches = 7;
-  
-  for (let i = 0; i < numMainBranches; i++) {
-    // All start from the same origin with slight variation
-    const startX = originX + seededRandom() * 20;
-    const startY = originY + seededRandom() * 20;
-    
-    // Initial length - longer branches to reach across screen
-    const initialLength = Math.min(treeW, treeH) * (0.15 + seededRandom() * 0.12);
-    
-    // Angles spread in a fan pattern, all going down-right (like reference)
-    // Range from about 20 degrees to 70 degrees (0.11*PI to 0.39*PI)
-    const angleRange = 0.35; // Total spread
-    const baseAngle = 0.15; // Starting angle (roughly 27 degrees)
-    const initialAngle = Math.PI * (baseAngle + (i / numMainBranches) * angleRange + seededRandom() * 0.08);
-    
-    generateBranch(startX, startY, initialLength, initialAngle, 0, i);
-  }
-}
-
-function generateBranch(x, y, length, angle, depth, growOrder) {
-  if (depth > MAX_DEPTH || length < 6) return;
-  
-  const endX = x + Math.cos(angle) * length;
-  const endY = y + Math.sin(angle) * length;
-  
-  // Calculate when this branch should grow (0-1 progress)
-  const growStart = (depth / MAX_DEPTH) * 0.7;
-  const growEnd = growStart + 0.3;
-  
-  branches.push({
-    x1: x, y1: y,
-    x2: endX, y2: endY,
-    depth,
-    length,
-    angle,
-    growStart,
-    growEnd,
-    thickness: Math.max(0.6, (MAX_DEPTH - depth) * 0.55),
-    // Store original positions for rustle effect
-    originalX2: endX,
-    originalY2: endY,
-    offsetX: 0,
-    offsetY: 0,
-    rustlePhase: seededRandom() * Math.PI * 2
+// Add sparkle at position
+function addSparkle(x, y) {
+  if (sparkles.length > 50) return;
+  sparkles.push({
+    x, y,
+    size: 1.5 + Math.random() * 3,
+    life: 1,
+    decay: 0.025 + Math.random() * 0.02
   });
-  
-  // Add small buds/nodes at branch tips (subtle, like the reference)
-  if (depth >= MAX_DEPTH - 2 && seededRandom() > 0.5) {
-    const leafCount = 1;
-    for (let i = 0; i < leafCount; i++) {
-      leaves.push({
-        x: endX + (seededRandom() - 0.5) * 15,
-        y: endY + (seededRandom() - 0.5) * 15,
-        originalX: endX + (seededRandom() - 0.5) * 15,
-        originalY: endY + (seededRandom() - 0.5) * 15,
-        size: 2 + seededRandom() * 2.5,
-        angle: seededRandom() * Math.PI * 2,
-        offsetX: 0,
-        offsetY: 0,
-        rustleAmount: 0,
-        parentBranchIndex: branches.length - 1,
-        growStart: growStart + 0.1,
-        growEnd: growEnd + 0.1,
-        phase: seededRandom() * Math.PI * 2
-      });
-    }
-  }
-  
-  // Create child branches - weeping style cascading down-right
-  const numChildren = depth < 2 ? 3 : (depth < 5 ? 2 : (seededRandom() > 0.6 ? 2 : 1));
-  
-  for (let i = 0; i < numChildren; i++) {
-    // Slight downward pull as branches get deeper (weeping effect)
-    const downwardBias = depth * 0.03;
-    
-    // Spread children around parent angle, biased slightly downward
-    const spreadFactor = (i - (numChildren - 1) / 2) / Math.max(1, numChildren - 1);
-    const angleOffset = spreadFactor * BRANCH_ANGLE_SPREAD + (seededRandom() - 0.5) * 0.15;
-    
-    let newAngle = angle + angleOffset + downwardBias;
-    
-    // Keep branches flowing down-right (between 0 and ~80 degrees from horizontal)
-    // This prevents branches from going backward or straight down
-    newAngle = Math.max(0.05, Math.min(Math.PI * 0.5, newAngle));
-    
-    const newLength = length * BRANCH_SHRINK * (0.85 + seededRandom() * 0.25);
-    
-    generateBranch(endX, endY, newLength, newAngle, depth + 1, growOrder + 1);
-  }
 }
 
-// Spawn petals when cursor ruffles leaves
+// Spawn petals when cursor moves fast
 function spawnPetals(x, y, count) {
-  if (petals.length > 40) return; // Limit for performance
+  if (petals.length > 50) return;
   for (let i = 0; i < count; i++) {
     petals.push({
-      x: x + (Math.random() - 0.5) * 30,
-      y: y + (Math.random() - 0.5) * 20,
-      vx: (Math.random() - 0.5) * 2,
-      vy: Math.random() * 1.5 + 0.5,
+      x: x + (Math.random() - 0.5) * 40,
+      y: y + (Math.random() - 0.5) * 30,
+      vx: (Math.random() - 0.5) * 2.5,
+      vy: Math.random() * 2 + 0.5,
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.15,
-      size: 4 + Math.random() * 5,
+      rotationSpeed: (Math.random() - 0.5) * 0.12,
+      size: 3 + Math.random() * 5,
       wobblePhase: Math.random() * Math.PI * 2,
-      wobbleSpeed: 0.02 + Math.random() * 0.02,
+      wobbleSpeed: 0.03 + Math.random() * 0.02,
       opacity: 1,
       life: 1
     });
@@ -193,34 +86,108 @@ function updateCursor(e) {
   cursor.vy = (newY - cursor.y) / dt * 16;
   cursor.speed = Math.hypot(cursor.vx, cursor.vy);
   
-  cursor.lastX = cursor.x;
-  cursor.lastY = cursor.y;
   cursor.x = newX;
   cursor.y = newY;
-  
   lastCursorTime = now;
+  
+  // Spawn petals on fast movement (only where branches exist - top-left area)
+  if (cursor.speed > CURSOR_SPEED_THRESHOLD && revealProgress > 0.5) {
+    // Check if cursor is in the branch area (where the image has red pixels)
+    const branchAreaCheck = cursor.x < treeW * 0.7 && cursor.y < treeH * 0.8;
+    // More likely to spawn in upper-left
+    const density = Math.max(0, 1 - (cursor.x / treeW) * 0.8 - (cursor.y / treeH) * 0.3);
+    
+    if (branchAreaCheck && Math.random() < density * 0.3) {
+      spawnPetals(cursor.x, cursor.y, Math.floor(1 + Math.random() * 2));
+    }
+  }
 }
 
-// Crystal sparkles for growth effect
-let sparkles = [];
-
-function addGrowthSparkle(x, y) {
-  if (sparkles.length > 30) return; // Limit for performance
-  sparkles.push({
-    x, y,
-    size: 2 + Math.random() * 3,
-    life: 1,
-    decay: 0.04 + Math.random() * 0.03 // Faster decay
-  });
-}
-
-// Draw the tree
-function drawTree(progress) {
+// Draw reveal effect - crystallizing from top-left
+function drawReveal(progress) {
   treeCtx.clearRect(0, 0, treeW, treeH);
   
-  const time = performance.now() * 0.001;
+  if (!imageLoaded) return;
   
-  // Draw and update sparkles
+  // Calculate image scaling to cover the canvas
+  const imgAspect = treeImage.width / treeImage.height;
+  const canvasAspect = treeW / treeH;
+  
+  let drawW, drawH, offsetX, offsetY;
+  
+  if (canvasAspect > imgAspect) {
+    // Canvas is wider - fit to width
+    drawW = treeW;
+    drawH = treeW / imgAspect;
+    offsetX = 0;
+    offsetY = 0; // Align to top
+  } else {
+    // Canvas is taller - fit to height
+    drawH = treeH;
+    drawW = treeH * imgAspect;
+    offsetX = 0; // Align to left
+    offsetY = 0;
+  }
+  
+  // Eased progress for smooth crystallization
+  const easedProgress = 1 - Math.pow(1 - progress, 3);
+  
+  // Create radial reveal from top-left corner
+  // The reveal expands outward like crystal growth
+  const maxRadius = Math.hypot(treeW, treeH) * 1.2;
+  const currentRadius = maxRadius * easedProgress;
+  
+  // Draw the image with a radial clip from top-left
+  treeCtx.save();
+  
+  // Create expanding reveal mask
+  treeCtx.beginPath();
+  
+  // Multiple overlapping circles for organic crystalline edge
+  const numCircles = 8;
+  for (let i = 0; i < numCircles; i++) {
+    const angle = (i / numCircles) * Math.PI * 0.6; // Fan out from corner
+    const cx = Math.cos(angle) * currentRadius * 0.1;
+    const cy = Math.sin(angle) * currentRadius * 0.1;
+    const r = currentRadius * (0.95 + Math.sin(i * 1.7 + progress * 5) * 0.05);
+    
+    treeCtx.moveTo(cx + r, cy);
+    treeCtx.arc(cx, cy, r, 0, Math.PI * 2);
+  }
+  
+  treeCtx.clip();
+  
+  // Draw the tree image
+  treeCtx.drawImage(treeImage, offsetX, offsetY, drawW, drawH);
+  
+  treeCtx.restore();
+  
+  // Add crystalline edge glow during reveal
+  if (progress < 1) {
+    const edgeRadius = currentRadius;
+    const gradient = treeCtx.createRadialGradient(0, 0, edgeRadius * 0.85, 0, 0, edgeRadius);
+    gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(0.7, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(0.9, "rgba(180, 30, 40, 0.15)");
+    gradient.addColorStop(1, "rgba(220, 50, 60, 0.3)");
+    
+    treeCtx.fillStyle = gradient;
+    treeCtx.beginPath();
+    treeCtx.arc(0, 0, edgeRadius, 0, Math.PI * 2);
+    treeCtx.fill();
+    
+    // Spawn sparkles along the reveal edge
+    if (Math.random() < 0.15) {
+      const sparkleAngle = Math.random() * Math.PI * 0.55;
+      const sparkleR = edgeRadius * (0.9 + Math.random() * 0.1);
+      addSparkle(
+        Math.cos(sparkleAngle) * sparkleR,
+        Math.sin(sparkleAngle) * sparkleR
+      );
+    }
+  }
+  
+  // Draw sparkles
   for (let i = sparkles.length - 1; i >= 0; i--) {
     const s = sparkles[i];
     s.life -= s.decay;
@@ -230,126 +197,31 @@ function drawTree(progress) {
       continue;
     }
     
-    treeCtx.fillStyle = `rgba(255, 120, 130, ${s.life * 0.8})`;
-    treeCtx.shadowColor = "rgba(255, 100, 110, 0.8)";
+    treeCtx.shadowColor = "rgba(255, 100, 110, 0.9)";
     treeCtx.shadowBlur = 8;
+    treeCtx.fillStyle = `rgba(255, 150, 160, ${s.life})`;
     treeCtx.beginPath();
     treeCtx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
     treeCtx.fill();
   }
   treeCtx.shadowBlur = 0;
   
-  // Draw branches
-  for (const branch of branches) {
-    // Calculate growth visibility
-    let branchProgress = 0;
-    if (progress >= branch.growEnd) {
-      branchProgress = 1;
-    } else if (progress > branch.growStart) {
-      branchProgress = (progress - branch.growStart) / (branch.growEnd - branch.growStart);
-    }
-    
-    if (branchProgress <= 0) continue;
-    
-    // Calculate rustle offset
-    const rustleX = branch.offsetX * Math.sin(time * 3 + branch.rustlePhase);
-    const rustleY = branch.offsetY * Math.cos(time * 2.5 + branch.rustlePhase);
-    
-    // Interpolate current end point based on growth
-    const currentX2 = branch.x1 + (branch.originalX2 + rustleX - branch.x1) * branchProgress;
-    const currentY2 = branch.y1 + (branch.originalY2 + rustleY - branch.y1) * branchProgress;
-    
-    // Draw with crystallization effect
-    const alpha = 0.5 + branchProgress * 0.5;
-    
-    // Glow effect
-    treeCtx.shadowColor = BRANCH_COLOR;
-    treeCtx.shadowBlur = 4 + branch.thickness;
-    
-    treeCtx.strokeStyle = `rgba(140, 15, 20, ${alpha})`;
-    treeCtx.lineWidth = branch.thickness * branchProgress;
-    treeCtx.lineCap = "round";
-    treeCtx.lineJoin = "round";
-    
-    treeCtx.beginPath();
-    treeCtx.moveTo(branch.x1, branch.y1);
-    treeCtx.lineTo(currentX2, currentY2);
-    treeCtx.stroke();
-    
-    // Add sparkles at growing tips (reduced frequency for performance)
-    if (branchProgress > 0.1 && branchProgress < 0.95 && Math.random() < 0.03) {
-      addGrowthSparkle(currentX2, currentY2);
-    }
-    
-    // Secondary highlight line for crystalline look
-    if (branch.thickness > 1) {
-      treeCtx.shadowBlur = 0;
-      treeCtx.strokeStyle = `rgba(200, 50, 60, ${alpha * 0.4})`;
-      treeCtx.lineWidth = branch.thickness * 0.4 * branchProgress;
-      treeCtx.beginPath();
-      treeCtx.moveTo(branch.x1, branch.y1);
-      treeCtx.lineTo(currentX2, currentY2);
-      treeCtx.stroke();
-    }
-  }
-  
-  // Reset shadow for leaves
-  treeCtx.shadowBlur = 0;
-  
-  // Draw leaves
-  for (const leaf of leaves) {
-    let leafProgress = 0;
-    if (progress >= leaf.growEnd) {
-      leafProgress = 1;
-    } else if (progress > leaf.growStart) {
-      leafProgress = (progress - leaf.growStart) / (leaf.growEnd - leaf.growStart);
-    }
-    
-    if (leafProgress <= 0) continue;
-    
-    const rustleX = leaf.offsetX * Math.sin(time * 4 + leaf.phase);
-    const rustleY = leaf.offsetY * Math.cos(time * 3.5 + leaf.phase);
-    
-    const x = leaf.originalX + rustleX;
-    const y = leaf.originalY + rustleY;
-    const size = leaf.size * leafProgress;
-    
-    // Glow
-    treeCtx.shadowColor = PETAL_COLOR;
-    treeCtx.shadowBlur = 6;
-    
-    treeCtx.fillStyle = LEAF_COLOR;
-    treeCtx.beginPath();
-    
-    // Draw leaf shape (elongated ellipse)
-    treeCtx.save();
-    treeCtx.translate(x, y);
-    treeCtx.rotate(leaf.angle + time * 0.2 * leaf.rustleAmount);
-    treeCtx.scale(1, 0.6);
-    treeCtx.arc(0, 0, size, 0, Math.PI * 2);
-    treeCtx.restore();
-    
-    treeCtx.fill();
-  }
-  
-  treeCtx.shadowBlur = 0;
-  
   // Draw falling petals
   for (let i = petals.length - 1; i >= 0; i--) {
     const petal = petals[i];
     
-    // Update petal physics
+    // Update physics
     petal.x += petal.vx;
     petal.y += petal.vy;
     petal.vx *= 0.99;
-    petal.vy += 0.02; // gravity
+    petal.vy += 0.025; // gravity
     
     // Wobble
     petal.wobblePhase += petal.wobbleSpeed;
-    petal.x += Math.sin(petal.wobblePhase) * 0.5;
+    petal.x += Math.sin(petal.wobblePhase) * 0.6;
     
     petal.rotation += petal.rotationSpeed;
-    petal.life -= 0.004;
+    petal.life -= 0.003;
     petal.opacity = petal.life;
     
     // Remove dead petals
@@ -363,115 +235,60 @@ function drawTree(progress) {
     treeCtx.translate(petal.x, petal.y);
     treeCtx.rotate(petal.rotation);
     
-    treeCtx.shadowColor = PETAL_COLOR;
+    treeCtx.shadowColor = "rgba(180, 30, 40, 0.6)";
     treeCtx.shadowBlur = 4;
     
-    treeCtx.fillStyle = `rgba(220, 40, 50, ${petal.opacity * 0.9})`;
+    treeCtx.fillStyle = `rgba(160, 25, 35, ${petal.opacity * 0.9})`;
     treeCtx.beginPath();
     
     // Petal shape
     treeCtx.moveTo(0, -petal.size);
-    treeCtx.quadraticCurveTo(petal.size * 0.8, -petal.size * 0.3, petal.size * 0.5, petal.size * 0.5);
-    treeCtx.quadraticCurveTo(0, petal.size, -petal.size * 0.5, petal.size * 0.5);
-    treeCtx.quadraticCurveTo(-petal.size * 0.8, -petal.size * 0.3, 0, -petal.size);
+    treeCtx.quadraticCurveTo(petal.size * 0.7, -petal.size * 0.2, petal.size * 0.4, petal.size * 0.5);
+    treeCtx.quadraticCurveTo(0, petal.size * 0.8, -petal.size * 0.4, petal.size * 0.5);
+    treeCtx.quadraticCurveTo(-petal.size * 0.7, -petal.size * 0.2, 0, -petal.size);
     
     treeCtx.fill();
     treeCtx.restore();
   }
-}
-
-// Check cursor interaction with branches and leaves
-function checkCursorInteraction() {
-  if (cursor.speed < CURSOR_SPEED_THRESHOLD) {
-    // Decay rustle amounts when cursor is slow
-    for (const branch of branches) {
-      branch.offsetX *= 0.92;
-      branch.offsetY *= 0.92;
-    }
-    for (const leaf of leaves) {
-      leaf.offsetX *= 0.92;
-      leaf.offsetY *= 0.92;
-      leaf.rustleAmount *= 0.92;
-    }
-    return;
-  }
-  
-  // Check branches near cursor
-  for (const branch of branches) {
-    const midX = (branch.x1 + branch.originalX2) / 2;
-    const midY = (branch.y1 + branch.originalY2) / 2;
-    const dist = Math.hypot(cursor.x - midX, cursor.y - midY);
-    
-    if (dist < CURSOR_RUFFLE_RADIUS) {
-      const influence = 1 - dist / CURSOR_RUFFLE_RADIUS;
-      branch.offsetX += cursor.vx * influence * 0.3;
-      branch.offsetY += cursor.vy * influence * 0.3;
-      
-      // Clamp
-      branch.offsetX = Math.max(-15, Math.min(15, branch.offsetX));
-      branch.offsetY = Math.max(-15, Math.min(15, branch.offsetY));
-    }
-  }
-  
-  // Check leaves near cursor
-  for (const leaf of leaves) {
-    const dist = Math.hypot(cursor.x - leaf.originalX, cursor.y - leaf.originalY);
-    
-    if (dist < CURSOR_RUFFLE_RADIUS) {
-      const influence = 1 - dist / CURSOR_RUFFLE_RADIUS;
-      leaf.offsetX += cursor.vx * influence * 0.5;
-      leaf.offsetY += cursor.vy * influence * 0.5;
-      leaf.rustleAmount = Math.min(1, leaf.rustleAmount + influence * 0.3);
-      
-      // Clamp
-      leaf.offsetX = Math.max(-20, Math.min(20, leaf.offsetX));
-      leaf.offsetY = Math.max(-20, Math.min(20, leaf.offsetY));
-      
-      // Chance to spawn petals
-      if (Math.random() < influence * 0.15 && cursor.speed > CURSOR_SPEED_THRESHOLD * 1.5) {
-        spawnPetals(leaf.originalX, leaf.originalY, 1);
-      }
-    }
-  }
+  treeCtx.shadowBlur = 0;
 }
 
 // Animation loop
-let growthStartTime = null;
+let revealStartTime = null;
 
-function animateTree(timestamp) {
-  if (!growthStartTime) {
-    growthStartTime = timestamp + GROWTH_START_DELAY;
+function animate(timestamp) {
+  if (!revealStartTime) {
+    revealStartTime = timestamp + REVEAL_START_DELAY;
   }
   
-  // Calculate growth progress
-  if (timestamp >= growthStartTime) {
-    const elapsed = timestamp - growthStartTime;
-    growthProgress = Math.min(1, elapsed / GROWTH_DURATION);
+  // Calculate reveal progress
+  if (timestamp >= revealStartTime && isRevealing) {
+    const elapsed = timestamp - revealStartTime;
+    revealProgress = Math.min(1, elapsed / REVEAL_DURATION);
     
-    // Ease-out for more natural crystallization feel
-    growthProgress = 1 - Math.pow(1 - growthProgress, 2.5);
+    if (revealProgress >= 1) {
+      isRevealing = false;
+    }
   }
   
-  checkCursorInteraction();
-  drawTree(growthProgress);
-  
-  requestAnimationFrame(animateTree);
+  drawReveal(revealProgress);
+  requestAnimationFrame(animate);
 }
 
 // Initialize
-function initTree() {
+function init() {
   sizeTreeCanvas();
-  generateTree();
-  requestAnimationFrame(animateTree);
+  
+  treeImage.onload = () => {
+    imageLoaded = true;
+  };
+  
+  requestAnimationFrame(animate);
 }
 
 // Event listeners
-window.addEventListener("resize", () => {
-  sizeTreeCanvas();
-  generateTree();
-});
-
+window.addEventListener("resize", sizeTreeCanvas);
 window.addEventListener("mousemove", updateCursor);
 
 // Start
-initTree();
+init();
